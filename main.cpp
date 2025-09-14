@@ -107,7 +107,7 @@ int main() {
 	glBindVertexArray(0);
 
 	// triangle data
-	bool drawTriangle = true;
+	bool drawTriangle = false;
 
 	float size = 1.0f;
 	float color[4] = { 0.8f, 0.3f, 0.02f, 1.0f };
@@ -142,12 +142,12 @@ int main() {
 		ImGui::NewFrame();
 
 		//// set imgui window
-		ImGui::Begin("Behold: The Humble Window");
-		ImGui::Text("Here ye shall find the text.");
-		ImGui::Checkbox("Draw Triangle", &drawTriangle);
-		ImGui::SliderFloat("Size", &size, 0.5f, 2.0f);
-		ImGui::ColorEdit4("Color", color);
-		ImGui::End();
+		//ImGui::Begin("Behold: The Humble Window");
+		//ImGui::Text("Here ye shall find the text.");
+		//ImGui::Checkbox("Draw Triangle", &drawTriangle);
+		//ImGui::SliderFloat("Size", &size, 0.5f, 2.0f);
+		//ImGui::ColorEdit4("Color", color);
+		//ImGui::End();
 
 		// docking
 		static bool opt_fullscreen = true;

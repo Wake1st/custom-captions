@@ -10,6 +10,10 @@
 #include "text_time.h"
 
 
+//  ffmpeg -i dauacity.wav -filter_complex "[0:a]showwavespic=s=2560x2560,crop=2560:2560[v]" -map "[v]" -frames:v 1 output.png
+//  ffmpeg -i output.png -vf "rotate=PI/2" rotated.png
+
+
 class Captioner {
 public:
     Captioner() {
