@@ -17,18 +17,65 @@
 class Captioner {
 public:
     Captioner() {
-        bool ret = LoadTextureFromFile("./data/rotated.png", &my_image_texture, &my_image_width, &my_image_height);
+        bool ret = LoadTextureFromFile("./data/rotated.png", &image_texture, &image_width, &image_height);
         IM_ASSERT(ret);
     }
 
     void update() {
+        ImGuiIO& io = ImGui::GetIO();
+
         ImGui::Begin("OpenGL Texture Text");
+
+        ImGui::BeginChild("Test");
+
+        // get the child window position
+        ImVec2 window_pos = ImGui::GetWindowPos();
+        ImVec2 window_size = ImGui::GetWindowSize();
+
+        // the scrollable height is the portion of the image not visable in the window
+        float scrollable_image_height = image_height - window_size.y;
+        if (scrollable_image_height < 0)
+            scrollable_image_height = 0.0f;
+
+        // the position of the line height is the window height minus the upper unseen portion of the image
+        float scroll_ratio = ImGui::GetScrollY() / ImGui::GetScrollMaxY();
+        float unseen_image_height = scrollable_image_height * scroll_ratio;
+
+        // add a new line
+        if (ImGui::IsMouseDown(GLFW_MOUSE_BUTTON_1)) {
+            // the line height should be relative to the whole image
+            lines.push_back(io.MousePos.y - window_pos.y + unseen_image_height);
+        }
+        
+        // draw the audio waveform
         ImGui::Image(
-            (ImTextureID)(intptr_t)my_image_texture, 
-            ImVec2(my_image_width * 0.1, my_image_height), 
+            (ImTextureID)(intptr_t)image_texture, 
+            ImVec2(image_width * 0.1, image_height), 
             ImVec2(0.3, 0), 
             ImVec2(0.7, 1)
         );
+
+        // draw existing lines
+        for (int i = 0; i < lines.size(); i++) {
+            // the relative height is the absolute and the window heights without the unseen height
+            ImGui::GetWindowDrawList()->AddLine(
+                ImVec2(window_pos.x, window_pos.y + lines[i] - unseen_image_height),
+                ImVec2(window_pos.x + line_width, window_pos.y + lines[i] - unseen_image_height),
+                IM_COL32(0, 200, 0, 255),
+                line_thickness
+            );
+        }
+        
+        // draw a horizontal line at the cursor, relative to current window
+        ImGui::GetWindowDrawList()->AddLine(
+            ImVec2(window_pos.x, io.MousePos.y),
+            ImVec2(window_pos.x + line_width, io.MousePos.y),
+            IM_COL32(0, 200, 0, 255), 
+            line_thickness
+        );
+
+        ImGui::EndChild();
+
         ImGui::End();
     }
 
@@ -36,9 +83,13 @@ private:
 	const char* audioPath = "";
     std::vector<TimeText> timeTexts;
 
-    int my_image_width = 0;
-    int my_image_height = 0;
-    GLuint my_image_texture = 0;
+    int image_width = 0;
+    int image_height = 0;
+    GLuint image_texture = 0;
+
+    std::vector<float> lines;
+    float line_width = 256.0f;
+    float line_thickness = 1.0f;
     
     // Simple helper function to load an image into a OpenGL texture with common settings
     bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_texture, int* out_width, int* out_height)
