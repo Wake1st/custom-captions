@@ -7,6 +7,8 @@
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "stb_image.h"
+
+#include "time_marker.h"
 #include "text_time.h"
 
 
@@ -24,55 +26,78 @@ public:
     void update() {
         ImGuiIO& io = ImGui::GetIO();
 
+        // create a window of a specific size
+        ImGui::SetNextWindowSize(ImVec2(line_width, 600), ImGuiCond_FirstUseEver);
         ImGui::Begin("OpenGL Texture Text");
+
+        // ensure we know if the current window is hovered
+        bool window_is_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
 
         ImGui::BeginChild("Test");
 
         // get the child window position
         ImVec2 window_pos = ImGui::GetWindowPos();
         ImVec2 window_size = ImGui::GetWindowSize();
+        line_width = window_size.x;
 
         // the scrollable height is the portion of the image not visable in the window
         float scrollable_image_height = image_height - window_size.y;
         if (scrollable_image_height < 0)
             scrollable_image_height = 0.0f;
 
-        // the position of the line height is the window height minus the upper unseen portion of the image
+        // the position of the marker height is the window height minus the upper unseen portion of the image
         float scroll_ratio = ImGui::GetScrollY() / ImGui::GetScrollMaxY();
         float unseen_image_height = scrollable_image_height * scroll_ratio;
-
-        // add a new line
-        if (ImGui::IsMouseDown(GLFW_MOUSE_BUTTON_1)) {
-            // the line height should be relative to the whole image
-            lines.push_back(io.MousePos.y - window_pos.y + unseen_image_height);
-        }
         
         // draw the audio waveform
         ImGui::Image(
             (ImTextureID)(intptr_t)image_texture, 
-            ImVec2(image_width * 0.1, image_height), 
+            ImVec2(window_size.x, image_height), 
             ImVec2(0.3, 0), 
             ImVec2(0.7, 1)
         );
 
-        // draw existing lines
-        for (int i = 0; i < lines.size(); i++) {
+        // store for later check on movement
+        bool is_actively_dragging = false;
+
+        // draw existing marker
+        for (int i = 0; i < markers.size(); i++) {
             // the relative height is the absolute and the window heights without the unseen height
+            bool hovered_over_marker = markers[i].IsHoveredOver(ImVec2(window_pos.x, window_pos.y - unseen_image_height), io.MousePos);
+
+            // set when selected, toggle off active when 
+            if (hovered_over_marker && ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
+                markers[i].SetActive(true);
+            }
+            else if (markers[i].GetActive() && ImGui::IsMouseReleased(GLFW_MOUSE_BUTTON_1)) {
+                markers[i].SetActive(false);
+            }
+            
+            // drag if active
+            if (markers[i].GetActive()) {
+                is_actively_dragging = true;
+                
+                // TODO: ensure no dragging beyond neighbors
+                markers[i].Drag(io.MousePos.y - window_pos.y + unseen_image_height);
+            }
+        }
+
+        
+        // add a new line, or drag an existing marker
+        if (window_is_hovered && !is_actively_dragging) {
+            // draw a horizontal line at the cursor, relative to current window
             ImGui::GetWindowDrawList()->AddLine(
-                ImVec2(window_pos.x, window_pos.y + lines[i] - unseen_image_height),
-                ImVec2(window_pos.x + line_width, window_pos.y + lines[i] - unseen_image_height),
-                IM_COL32(0, 200, 0, 255),
+                ImVec2(window_pos.x, io.MousePos.y),
+                ImVec2(window_pos.x + line_width, io.MousePos.y),
+                IM_COL32(0, 200, 0, 255), 
                 line_thickness
             );
+
+            if (ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
+                // the marker height should be relative to the whole image
+                markers.push_back(TimeMarker(&line_width, io.MousePos.y - window_pos.y + unseen_image_height));
+            }
         }
-        
-        // draw a horizontal line at the cursor, relative to current window
-        ImGui::GetWindowDrawList()->AddLine(
-            ImVec2(window_pos.x, io.MousePos.y),
-            ImVec2(window_pos.x + line_width, io.MousePos.y),
-            IM_COL32(0, 200, 0, 255), 
-            line_thickness
-        );
 
         ImGui::EndChild();
 
@@ -87,7 +112,7 @@ private:
     int image_height = 0;
     GLuint image_texture = 0;
 
-    std::vector<float> lines;
+    std::vector<TimeMarker> markers;
     float line_width = 256.0f;
     float line_thickness = 1.0f;
     

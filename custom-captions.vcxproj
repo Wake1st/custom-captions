@@ -170,6 +170,7 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="text_time.h" />
+    <ClInclude Include="time_marker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,60 @@
+#pragma once
+
+#include "imgui.h"
+
+const int line_thickness = 1;
+const int hover_thickness = 20;
+
+class TimeMarker {
+public:
+	TimeMarker(float *_width, float _height) {
+		width = _width;
+		height = _height;
+	}
+
+	bool IsHoveredOver(ImVec2 relative_position, ImVec2 mouse_pos) {
+		float rel_y = relative_position.y + height;
+		float half_height = hover_thickness / 2.0f;
+
+		bool is_hovered = relative_position.x < mouse_pos.x
+			&& mouse_pos.x < relative_position.x + *width
+			&& rel_y - half_height < mouse_pos.y
+			&& mouse_pos.y < rel_y + half_height;
+
+		// draw a thick line if hovered, or just a regular one
+		if (is_hovered) {
+			ImGui::GetWindowDrawList()->AddLine(
+				ImVec2(relative_position.x, relative_position.y + height),
+				ImVec2(relative_position.x + *width, relative_position.y + height),
+				IM_COL32(0, 100, 160, 120),
+				hover_thickness
+			);
+		}
+
+		ImGui::GetWindowDrawList()->AddLine(
+			ImVec2(relative_position.x, relative_position.y + height),
+			ImVec2(relative_position.x + *width, relative_position.y + height),
+			IM_COL32(0, 200, 0, 255),
+			line_thickness
+		);
+
+		return is_hovered;
+	}
+
+	void Drag(float relative_height) {
+		height = relative_height;
+	}
+
+	bool GetActive() {
+		return active;
+	}
+
+	void SetActive(bool value) {
+		active = value;
+	}
+
+private:
+	float height = 0;
+	float *width = 0;
+	bool active = false;
+};
