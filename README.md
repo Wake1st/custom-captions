@@ -18,18 +18,21 @@ Save/export data.
 
 ## Contribution
 
-This is for any devs who wish to contribute. Currently, I'm storing any used libraies in the repo (it's not the best solution, but I won't be changing )
+This is for any devs who wish to contribute. Currently, I'm storing any used libraies in the repo (it's not the best solution, but I won't be changing it till I have a build pipeline for those).
 
 ### Current Goals
 
 - [ ] create new project with audio file
 - [ ] use ffmpeg to turn audio file into waveform image
-- [ ] display audio waveform image in window
-- [ ] fit waveform image to window
-- [ ] add visual markers over waveform image
-- [ ] edit visual markers via click & drag
+- [x] display audio waveform image in window
+- [x] fit waveform image to window
+- [x] add visual markers over waveform image
+- [x] edit visual markers via click & drag
+- [x] ensure markers stay in order of their time value
+- [x] ensure new markers cannot be inserted tightly between others
 - [ ] ensure markers do not exceed their neighbors bounds
-- [ ] remove markers with left click
+  - issue: lots of jitter; can currently override
+- [x] remove markers with left click
 - [ ] create window for text inputs
 - [ ] add input box for each marker
 - [ ] insert input box between markers

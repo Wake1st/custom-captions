@@ -57,13 +57,22 @@ public:
             ImVec2(0.7, 1)
         );
 
-        // store for later check on movement
+        // ensures we don't place a marker while moving another one
         bool is_actively_dragging = false;
 
-        // draw existing marker
+        // the marker height should be relative to the whole image
+        float relative_height = io.MousePos.y - window_pos.y + unseen_image_height;
+
+        // draw existing markers
         for (int i = 0; i < markers.size(); i++) {
             // the relative height is the absolute and the window heights without the unseen height
             bool hovered_over_marker = markers[i].IsHoveredOver(ImVec2(window_pos.x, window_pos.y - unseen_image_height), io.MousePos);
+
+            // first check for removal, and exit loop since nothing is needed
+            if (hovered_over_marker && ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_2)) {
+                markers.erase(markers.begin() + i);
+                break;
+            }
 
             // set when selected, toggle off active when 
             if (hovered_over_marker && ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
@@ -75,14 +84,24 @@ public:
             
             // drag if active
             if (markers[i].GetActive()) {
-                is_actively_dragging = true;
                 
-                // TODO: ensure no dragging beyond neighbors
-                markers[i].Drag(io.MousePos.y - window_pos.y + unseen_image_height);
+                // check the neighbors to ensure no overlap
+                if (i + 1 < markers.size() && markers[i + 1].GetLowerBound() < markers[i].GetUpperBound()) {
+                    markers[i].SetHeightFromUpperBound(markers[i + 1].GetLowerBound());
+                }
+                else if (0 < i - 1 && markers[i].GetLowerBound() < markers[i - 1].GetUpperBound()) {
+                    markers[i].SetHeightFromLowerBound(markers[i - 1].GetUpperBound());
+                }
+                else {
+                    markers[i].SetHeight(relative_height);
+                }
+
+                // since we're draggin this marker, no other needs to be checked
+                is_actively_dragging = true;
+                break;
             }
         }
 
-        
         // add a new line, or drag an existing marker
         if (window_is_hovered && !is_actively_dragging) {
             // draw a horizontal line at the cursor, relative to current window
@@ -93,11 +112,19 @@ public:
                 line_thickness
             );
 
+            // attempt to insert on left mouse click
             if (ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
-                // the marker height should be relative to the whole image
-                markers.push_back(TimeMarker(&line_width, io.MousePos.y - window_pos.y + unseen_image_height));
+                // create a new marker where the mouse is
+                TimeMarker new_marker = TimeMarker(&line_width, relative_height);
+
+                // if no insert, show user feedback
+                if (!CanInsertMarker(&new_marker)) {
+                    new_marker.ShowError(ImVec2(window_pos.x, window_pos.y - unseen_image_height), io.MousePos);
+                }
             }
         }
+
+
 
         ImGui::EndChild();
 
@@ -164,6 +191,40 @@ private:
         bool ret = LoadTextureFromMemory(file_data, file_size, out_texture, out_width, out_height);
         IM_FREE(file_data);
         return ret;
+    }
+
+    bool CanInsertMarker(TimeMarker *marker) {
+        // simply insert if there are no other markers
+        if (markers.size() == 0) {
+            markers.push_back(*marker);
+            return true;
+        }
+
+        // insert marker at the lower position if it clears
+        if (marker->GetUpperBound() < markers[0].GetLowerBound()) {
+            markers.insert(markers.begin(), *marker);
+            return true;
+        }
+
+        // insert marker between it's nearest neighbors
+        for (int i = 1; i < markers.size(); i++) {
+            // insert if lower than the current and higher than the previous bounds
+            if (markers[i - 1].GetUpperBound() < marker->GetLowerBound() &&
+                marker->GetUpperBound() < markers[i].GetLowerBound()
+            ) {
+                markers.insert(markers.begin() + i, *marker);
+                return true;
+            }
+        }
+
+        // insert if higher than the second highest bound
+        if (markers[markers.size() - 1].GetUpperBound() < marker->GetLowerBound()) {
+            markers.push_back(*marker);
+            return true;
+        }
+
+        // no more places to insert
+        return false;
     }
 };
 

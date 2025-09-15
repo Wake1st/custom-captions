@@ -41,7 +41,16 @@ public:
 		return is_hovered;
 	}
 
-	void Drag(float relative_height) {
+	void ShowError(ImVec2 relative_position, ImVec2 mouse_pos) {
+		ImGui::GetWindowDrawList()->AddLine(
+			ImVec2(relative_position.x, relative_position.y + height),
+			ImVec2(relative_position.x + *width, relative_position.y + height),
+			IM_COL32(180, 0, 60, 120),
+			hover_thickness
+		);
+	}
+
+	void SetHeight(float relative_height) {
 		height = relative_height;
 	}
 
@@ -51,6 +60,30 @@ public:
 
 	void SetActive(bool value) {
 		active = value;
+	}
+
+	float GetLowerBound() {
+		return height - hover_thickness / 2.0f;
+	}
+
+	float GetUpperBound() {
+		return height + hover_thickness / 2.0f;
+	}
+
+	/// <summary>
+	/// Sets the height relative to this markers own lower bound.
+	/// </summary>
+	/// <param name="lower_bound"></param>
+	void SetHeightFromLowerBound(float lower_bound) {
+		height = lower_bound + hover_thickness / 2.0f;
+	}
+
+	/// <summary>
+	/// Sets the height relative to this markers own upper bound.
+	/// </summary>
+	/// <param name="upper_bound"></param>
+	void SetHeightFromUpperBound(float upper_bound) {
+		height = upper_bound - hover_thickness / 2.0f;
 	}
 
 private:
