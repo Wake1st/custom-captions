@@ -22,6 +22,7 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 
 ### Current Goals
 
+- [x] can dock windows within application
 - [ ] create new project with audio file
 - [ ] use ffmpeg to turn audio file into waveform image
 - [x] display audio waveform image in window
@@ -33,12 +34,13 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 - [ ] ensure markers do not exceed their neighbors bounds
   - issue: lots of jitter; can currently override
 - [x] remove markers with left click
-- [ ] create window for text inputs
-- [ ] add input box for each marker
-- [ ] insert input box between markers
-- [ ] delete input box when removing marker
+- [X] create window for text inputs
+- [X] add input box for each marker
+- [x] insert input box between markers
+- [x] delete input box when removing marker
 - [ ] hovering/scrolling in one window will cause the other to match
-- [ ] store data in time/text pairs (json is fine)
+- [ ] play/pause button
+- [ ] serialize data in time/text pairs (json is fine)
 - [ ] load project with project data
 - [ ] save project data
 - [ ] open project data

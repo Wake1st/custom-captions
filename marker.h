@@ -5,9 +5,11 @@
 const int line_thickness = 1;
 const int hover_thickness = 20;
 
-class TimeMarker {
+class Marker {
 public:
-	TimeMarker(float *_width, float _height) {
+	char buffer[64] = "";
+
+	Marker(float *_width, float _height) {
 		width = _width;
 		height = _height;
 	}
