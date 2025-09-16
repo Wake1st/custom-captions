@@ -14,14 +14,11 @@
 #include "text_time.h"
 
 
-//  ffmpeg -i dauacity.wav -filter_complex "[0:a]showwavespic=s=2560x2560,crop=2560:2560[v]" -map "[v]" -frames:v 1 output.png
-//  ffmpeg -i output.png -vf "rotate=PI/2" rotated.png
-
-
 class Captioner {
 public:
-    Captioner() {
-        bool ret = LoadTextureFromFile("./data/rotated.png", &image_texture, &image_width, &image_height);
+    void load(std::string filename) {
+        std::string path = std::format("./data/{}.png", filename);
+        bool ret = LoadTextureFromFile(path.c_str(), &image_texture, &image_width, &image_height);
         IM_ASSERT(ret);
     }
 
@@ -185,7 +182,7 @@ private:
             // attempt to insert on left mouse click
             if (ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
                 // create a new marker where the mouse is
-                TimeMarker new_marker = TimeMarker(&line_width, relative_height);
+                Marker new_marker = Marker(&line_width, relative_height);
 
                 // if no insert, show user feedback
                 added_new_marker = CanInsertMarker(&new_marker);
@@ -202,7 +199,7 @@ private:
         return added_new_marker;
     }
 
-    bool CanInsertMarker(TimeMarker *marker) {
+    bool CanInsertMarker(Marker *marker) {
         // simply insert if there are no other markers
         if (markers.size() == 0) {
             markers.push_back(*marker);

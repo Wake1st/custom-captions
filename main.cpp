@@ -1,7 +1,14 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui-filebrowser.h"
 
+#include <ctime>
+#include <iomanip>
+#include <format>
+#include <string>
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -9,12 +16,54 @@
 #include "captioner.h"
 
 
-void error_callback(int error, const char* description)
+void ErrorCallback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
 }
 
-void DrawDockableParentWindow(bool *p_open) {
+std::string GetFormattedTimestamp() {
+	// Get the current time point from the system clock
+	auto now = std::chrono::system_clock::now();
+
+	// Convert the time point to a time_t object
+	std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+	// Convert time_t to a tm struct for local time
+	std::tm* localTime = std::localtime(&currentTime);
+
+	// Create a string stream to format the time
+	std::ostringstream oss;
+	oss << std::put_time(localTime, "%Y-%m-%d_%H-%M-%S"); // Format string
+
+	return oss.str();
+}
+
+std::string CreateWaveform(std::string path) {
+	// create a standard file name thats always changing
+	std::string filename = GetFormattedTimestamp();
+
+	// command for creating the waveform
+	std::string create_waveform_cmd = std::format(
+		"ffmpeg -i {} -filter_complex \"[0:a]showwavespic=s=2560x2560,crop=2560:2560[v]\" -map \"[v]\" -update true -frames:v 1 ./data/{}_upr.png",
+		path,
+		filename
+	);
+	
+	// command to rotate the waveform
+	std::string rotate_waveform_cmd = std::format(
+		"ffmpeg -i ./data/{}_upr.png -vf \"rotate=PI/2\" -update true -frames:v 1 ./data/{}.png",
+		filename,
+		filename
+	);
+
+	// execute commands
+	int waveform_result = system(create_waveform_cmd.c_str());
+	int rotation_result = system(rotate_waveform_cmd.c_str());
+
+	return filename;
+}
+
+void DrawDockableParentWindow(bool *p_open, ImGui::FileBrowser *fileDialog) {
 	static bool opt_fullscreen = true;
 	static bool opt_padding = false;
 	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
@@ -65,13 +114,32 @@ void DrawDockableParentWindow(bool *p_open) {
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 	}
 
+	if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("Options"))
+        {
+            // Disabling fullscreen would allow the window to be moved to the front of other windows,
+            // which we can't undo at the moment without finer window depth/z control.
+            ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen);
+            ImGui::Separator();
+
+			if (ImGui::MenuItem("Open", "")) {
+				fileDialog->Open();
+			}
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
+
 	ImGui::End();
 }
 
 int main() {
 	// setup glfw
 	glfwInit();
-	glfwSetErrorCallback(error_callback);
+	glfwSetErrorCallback(ErrorCallback);
 
 	// setup window
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -108,6 +176,15 @@ int main() {
 	// caption data
 	Captioner* captioner = new Captioner();
 
+	// create a file browser instance
+	ImGui::FileBrowser fileDialog;
+
+	// (optional) set browser properties
+	fileDialog.SetTitle("File Browser");
+	fileDialog.SetTypeFilters({ ".wav", ".mp3", ".ogg" });
+
+	std::string filename = "EMPTY";
+
 	while (!glfwWindowShouldClose(window))
 	{
 		// handle GLFW events
@@ -123,10 +200,24 @@ int main() {
 		ImGui::NewFrame();
 
 		// set parent window
-		DrawDockableParentWindow((bool*)true);
+		DrawDockableParentWindow((bool*)true, &fileDialog);
 
 		// tool
 		captioner->update();
+
+		// file browser
+		fileDialog.Display();
+
+		if (fileDialog.HasSelected())
+		{
+			// get path and clear dialog
+			std::string path = fileDialog.GetSelected().string();
+			fileDialog.ClearSelected();
+
+			// use ffmpeg to create waveform of file
+			filename = CreateWaveform(path);
+			captioner->load(filename);
+		}
 
 		// render imgui
 		ImGui::Render();

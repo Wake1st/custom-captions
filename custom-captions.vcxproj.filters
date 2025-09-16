@@ -92,5 +92,8 @@
     <ClInclude Include="marker.h">
       <Filter>Header Files\captioner</Filter>
     </ClInclude>
+    <ClInclude Include="imgui-filebrowser.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

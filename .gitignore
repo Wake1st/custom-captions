@@ -23,3 +23,6 @@ build/
 /out
 .idea/
 CMakeSettings.json
+
+# do not include program data
+data/

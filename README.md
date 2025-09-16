@@ -23,8 +23,8 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 ### Current Goals
 
 - [x] can dock windows within application
-- [ ] create new project with audio file
-- [ ] use ffmpeg to turn audio file into waveform image
+- [x] create new project with audio file
+- [x] use ffmpeg to turn audio file into waveform image
 - [x] display audio waveform image in window
 - [x] fit waveform image to window
 - [x] add visual markers over waveform image
