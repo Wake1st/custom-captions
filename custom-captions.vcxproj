@@ -162,6 +162,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="audio_player.h" />
     <ClInclude Include="captioner.h" />
     <ClInclude Include="imgui-filebrowser.h" />
     <ClInclude Include="imgui\imconfig.h" />

@@ -10,10 +10,12 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <filesystem>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "captioner.h"
+#include "audio_player.h"
 
 
 void ErrorCallback(int error, const char* description)
@@ -36,6 +38,15 @@ std::string GetFormattedTimestamp() {
 	oss << std::put_time(localTime, "%Y-%m-%d_%H-%M-%S"); // Format string
 
 	return oss.str();
+}
+
+std::string GetFilenameFromPath(const std::string& path) {
+	size_t lastSlashPos = path.find_last_of("/\\");
+	if (lastSlashPos == std::string::npos) {
+		// No directory separator found, the whole string is the filename
+		return path;
+	}
+	return path.substr(lastSlashPos + 1);
 }
 
 std::string CreateWaveform(std::string path) {
@@ -174,7 +185,8 @@ int main() {
 	glViewport(0, 0, 1000, 800);
 
 	// caption data
-	Captioner* captioner = new Captioner();
+	Captioner captioner = Captioner();
+	AudioPlayer audio_player = AudioPlayer();
 
 	// create a file browser instance
 	ImGui::FileBrowser fileDialog;
@@ -183,7 +195,8 @@ int main() {
 	fileDialog.SetTitle("File Browser");
 	fileDialog.SetTypeFilters({ ".wav", ".mp3", ".ogg" });
 
-	std::string filename = "EMPTY";
+	std::string audio_file = "EMPTY";
+	std::string image_filename = "EMPTY";
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -202,8 +215,18 @@ int main() {
 		// set parent window
 		DrawDockableParentWindow((bool*)true, &fileDialog);
 
+		// audio functions
+		if (audio_file != "EMPTY")
+			audio_player.Update(audio_file);
+
 		// tool
-		captioner->update();
+		captioner.Update();
+
+		// draw playback
+		double playback = audio_player.GetPlayTime();
+		if (playback > 0.0) {
+			captioner.DrawPlayback(playback);
+		}
 
 		// file browser
 		fileDialog.Display();
@@ -211,12 +234,12 @@ int main() {
 		if (fileDialog.HasSelected())
 		{
 			// get path and clear dialog
-			std::string path = fileDialog.GetSelected().string();
+			audio_file = fileDialog.GetSelected().string();
 			fileDialog.ClearSelected();
 
 			// use ffmpeg to create waveform of file
-			filename = CreateWaveform(path);
-			captioner->load(filename);
+			image_filename = CreateWaveform(audio_file);
+			captioner.Load(image_filename);
 		}
 
 		// render imgui

@@ -95,5 +95,8 @@
     <ClInclude Include="imgui-filebrowser.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="audio_player.h">
+      <Filter>Header Files\captioner</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

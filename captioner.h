@@ -16,17 +16,38 @@
 
 class Captioner {
 public:
-    void load(std::string filename) {
+    void Load(std::string filename) {
         std::string path = std::format("./data/{}.png", filename);
         bool ret = LoadTextureFromFile(path.c_str(), &image_texture, &image_width, &image_height);
         IM_ASSERT(ret);
     }
 
-    void update() {
+    void Update() {
         ImGuiIO& io = ImGui::GetIO();
 
         bool marker_added = MarkerWindow(io);
         InputWindow(marker_added);
+    }
+
+    void DrawPlayback(double ratio) {
+        ImGui::Begin("Waveform");
+        ImGui::BeginChild("Image");
+        
+        // get window values
+        ImVec2 window_pos = ImGui::GetWindowPos();
+        ImVec2 window_size = ImGui::GetWindowSize();
+        line_width = window_size.x;
+
+        // draw a horizontal line at the playback place
+        ImGui::GetWindowDrawList()->AddLine(
+            ImVec2(window_pos.x, ratio * image_height),
+            ImVec2(window_pos.x + line_width, ratio * image_height),
+            IM_COL32(240, 240, 240, 255),
+            playback_thickness
+        );
+
+        ImGui::EndChild();
+        ImGui::End();
     }
 
 private:
@@ -40,6 +61,7 @@ private:
     std::vector<Marker> markers;
     float line_width = 256.0f;
     float line_thickness = 1.0f;
+    float playback_thickness = 4.0f;
 
     // Simple helper function to load an image into a OpenGL texture with common settings
     bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_texture, int* out_width, int* out_height)
@@ -99,7 +121,8 @@ private:
         // ensure we know if the current window is hovered
         bool window_is_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
 
-        ImGui::BeginChild("Test");
+        // display the waveform image
+        ImGui::BeginChild("Image");
 
         // get the child window position
         ImVec2 window_pos = ImGui::GetWindowPos();
