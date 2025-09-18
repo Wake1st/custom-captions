@@ -14,16 +14,33 @@
 #include "text_time.h"
 
 
+const float zoom_update_rate = 0.1f;
+
+
 class Captioner {
 public:
     void Load(std::string filename) {
+        // get the window data
+        ImGui::SetNextWindowSize(ImVec2(line_width, 600), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Waveform");
+        ImVec2 window_size = ImGui::GetWindowSize();
+        ImGui::End();
+
+        // load the audio file
         std::string path = std::format("./data/{}.png", filename);
         bool ret = LoadTextureFromFile(path.c_str(), &image_texture, &image_width, &image_height);
         IM_ASSERT(ret);
+
+        // set the zoom value
+        zoom = window_size.y / image_height;
     }
 
     void Update() {
         ImGuiIO& io = ImGui::GetIO();
+
+        // set zoom based on scroll wheel
+        if (io.KeyCtrl)
+            zoom += zoom_update_rate * io.MouseWheel;
 
         bool marker_added = MarkerWindow(io);
         InputWindow(marker_added);
@@ -39,7 +56,7 @@ public:
         line_width = window_size.x;
 
         // draw a horizontal line at the playback place
-        float playback_height = ratio * image_height + window_pos.y - unseen_image_height;
+        float playback_height = (ratio * zoom * image_height + window_pos.y - unseen_image_height);
         ImGui::GetWindowDrawList()->AddLine(
             ImVec2(window_pos.x, playback_height),
             ImVec2(window_pos.x + line_width, playback_height),
@@ -59,6 +76,7 @@ private:
     int image_height = 0;
     GLuint image_texture = 0;
     float unseen_image_height = 0.0f;
+    float zoom = 0.0f;
 
     std::vector<Marker> markers;
     float line_width = 256.0f;
@@ -143,7 +161,7 @@ private:
         // draw the audio waveform
         ImGui::Image(
             (ImTextureID)(intptr_t)image_texture,
-            ImVec2(window_size.x, image_height),
+            ImVec2(window_size.x, zoom * image_height),
             ImVec2(0.3, 0),
             ImVec2(0.7, 1)
         );
@@ -157,7 +175,10 @@ private:
         // draw existing markers
         for (int i = 0; i < markers.size(); i++) {
             // the relative height is the absolute and the window heights without the unseen height
-            bool hovered_over_marker = markers[i].IsHoveredOver(ImVec2(window_pos.x, window_pos.y - unseen_image_height), io.MousePos);
+            bool hovered_over_marker = markers[i].IsHoveredOver(
+                ImVec2(window_pos.x, window_pos.y - unseen_image_height), 
+                io.MousePos
+            );
 
             // first check for removal, and exit loop since nothing is needed
             if (hovered_over_marker && ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_2)) {
@@ -218,7 +239,6 @@ private:
         }
 
         ImGui::EndChild();
-
         ImGui::End();
 
         return added_new_marker;

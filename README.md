@@ -38,8 +38,9 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 - [X] add input box for each marker
 - [x] insert input box between markers
 - [x] delete input box when removing marker
+- [x] play/pause button
+- [ ] zoom in an out of image
 - [ ] hovering/scrolling in one window will cause the other to match
-- [ ] play/pause button
 - [ ] serialize data in time/text pairs (json is fine)
 - [ ] load project with project data
 - [ ] save project data
