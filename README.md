@@ -31,7 +31,7 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 - [x] edit visual markers via click & drag
 - [x] ensure markers stay in order of their time value
 - [x] ensure new markers cannot be inserted tightly between others
-- [ ] ensure markers do not exceed their neighbors bounds
+- [x] ensure markers do not exceed their neighbors bounds
   - issue: lots of jitter; can currently override
 - [x] remove markers with left click
 - [X] create window for text inputs
@@ -39,7 +39,8 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 - [x] insert input box between markers
 - [x] delete input box when removing marker
 - [x] play/pause button
-- [ ] zoom in an out of image
+- [x] zoom in an out of image
+  - issue: the height slightly changes
 - [ ] hovering/scrolling in one window will cause the other to match
 - [ ] serialize data in time/text pairs (json is fine)
 - [ ] load project with project data

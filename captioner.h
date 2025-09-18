@@ -56,7 +56,7 @@ public:
         line_width = window_size.x;
 
         // draw a horizontal line at the playback place
-        float playback_height = (ratio * zoom * image_height + window_pos.y - unseen_image_height);
+        float playback_height = ratio * zoom * image_height - unseen_image_height + window_pos.y;
         ImGui::GetWindowDrawList()->AddLine(
             ImVec2(window_pos.x, playback_height),
             ImVec2(window_pos.x + line_width, playback_height),
@@ -150,13 +150,29 @@ private:
         line_width = window_size.x;
 
         // the scrollable height is the portion of the image not visable in the window
-        float scrollable_image_height = image_height - window_size.y;
+        float scrollable_image_height = zoom * image_height - window_size.y;
         if (scrollable_image_height < 0)
             scrollable_image_height = 0.0f;
 
         // the position of the marker height is the window height minus the upper unseen portion of the image
         float scroll_ratio = ImGui::GetScrollY() / ImGui::GetScrollMaxY();
-        unseen_image_height = scrollable_image_height * scroll_ratio;
+        if (scrollable_image_height > 0)
+            unseen_image_height = scrollable_image_height * scroll_ratio;
+        else
+            unseen_image_height = 0.0;
+
+        // the marker height should be relative to the whole image
+        float relative_height = 0.0;
+        if ((zoom * image_height - window_size.y) < 0) {
+            relative_height = (io.MousePos.y - window_pos.y) / zoom;
+            std::string msg = std::format("relative height: {} = ({} - {}) / {}", relative_height, io.MousePos.y, window_pos.y, zoom);
+            ImGui::Text(msg.c_str());
+        }
+        else {
+            relative_height = (io.MousePos.y - window_pos.y + ((image_height - window_size.y) * scroll_ratio)) / zoom;
+            std::string msg = std::format("relative height: {} = ({} - {} + (({} - {}) * {})) / {}", relative_height, io.MousePos.y, window_pos.y, image_height, window_size.y, scroll_ratio, zoom);
+            ImGui::Text(msg.c_str());
+        }
 
         // draw the audio waveform
         ImGui::Image(
@@ -168,16 +184,13 @@ private:
 
         // ensures we don't place a marker while moving another one
         bool is_actively_dragging = false;
-
-        // the marker height should be relative to the whole image
-        float relative_height = io.MousePos.y - window_pos.y + unseen_image_height;
-
         // draw existing markers
         for (int i = 0; i < markers.size(); i++) {
             // the relative height is the absolute and the window heights without the unseen height
             bool hovered_over_marker = markers[i].IsHoveredOver(
                 ImVec2(window_pos.x, window_pos.y - unseen_image_height), 
-                io.MousePos
+                io.MousePos,
+                zoom
             );
 
             // first check for removal, and exit loop since nothing is needed
@@ -233,7 +246,7 @@ private:
                 // if no insert, show user feedback
                 added_new_marker = CanInsertMarker(&new_marker);
                 if (!added_new_marker) {
-                    new_marker.ShowError(ImVec2(window_pos.x, window_pos.y - unseen_image_height), io.MousePos);
+                    new_marker.ShowError(ImVec2(window_pos.x, relative_height), io.MousePos, zoom);
                 }
             }
         }
@@ -281,12 +294,6 @@ private:
     void InputWindow(bool create_input) {
         ImGui::SetNextWindowSize(ImVec2(512, 600), ImGuiCond_FirstUseEver);
         ImGui::Begin("Text");
-
-        //// add a new input
-        //if (create_input) {
-        //    TextInput input = TextInput();
-        //    textInputs.push_back(input);
-        //}
 
         // display all existing inputs
         for (int i = 0; i < markers.size(); i++) {

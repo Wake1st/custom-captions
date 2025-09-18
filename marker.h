@@ -14,8 +14,8 @@ public:
 		height = _height;
 	}
 
-	bool IsHoveredOver(ImVec2 relative_position, ImVec2 mouse_pos) {
-		float rel_y = relative_position.y + height;
+	bool IsHoveredOver(ImVec2 relative_position, ImVec2 mouse_pos, float zoom) {
+		float rel_y = relative_position.y + height * zoom;
 		float half_height = hover_thickness / 2.0f;
 
 		bool is_hovered = relative_position.x < mouse_pos.x
@@ -26,16 +26,16 @@ public:
 		// draw a thick line if hovered, or just a regular one
 		if (is_hovered) {
 			ImGui::GetWindowDrawList()->AddLine(
-				ImVec2(relative_position.x, relative_position.y + height),
-				ImVec2(relative_position.x + *width, relative_position.y + height),
+				ImVec2(relative_position.x, relative_position.y + height * zoom),
+				ImVec2(relative_position.x + *width, relative_position.y + height * zoom),
 				IM_COL32(0, 100, 160, 120),
 				hover_thickness
 			);
 		}
 
 		ImGui::GetWindowDrawList()->AddLine(
-			ImVec2(relative_position.x, relative_position.y + height),
-			ImVec2(relative_position.x + *width, relative_position.y + height),
+			ImVec2(relative_position.x, relative_position.y + height * zoom),
+			ImVec2(relative_position.x + *width, relative_position.y + height * zoom),
 			IM_COL32(0, 200, 0, 255),
 			line_thickness
 		);
@@ -43,10 +43,10 @@ public:
 		return is_hovered;
 	}
 
-	void ShowError(ImVec2 relative_position, ImVec2 mouse_pos) {
+	void ShowError(ImVec2 relative_position, ImVec2 mouse_pos, float zoom) {
 		ImGui::GetWindowDrawList()->AddLine(
-			ImVec2(relative_position.x, relative_position.y + height),
-			ImVec2(relative_position.x + *width, relative_position.y + height),
+			ImVec2(relative_position.x, relative_position.y + height * zoom),
+			ImVec2(relative_position.x + *width, relative_position.y + height * zoom),
 			IM_COL32(180, 0, 60, 120),
 			hover_thickness
 		);
