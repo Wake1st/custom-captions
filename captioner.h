@@ -39,9 +39,10 @@ public:
         line_width = window_size.x;
 
         // draw a horizontal line at the playback place
+        float playback_height = ratio * image_height + window_pos.y - unseen_image_height;
         ImGui::GetWindowDrawList()->AddLine(
-            ImVec2(window_pos.x, ratio * image_height),
-            ImVec2(window_pos.x + line_width, ratio * image_height),
+            ImVec2(window_pos.x, playback_height),
+            ImVec2(window_pos.x + line_width, playback_height),
             IM_COL32(240, 240, 240, 255),
             playback_thickness
         );
@@ -57,6 +58,7 @@ private:
     int image_width = 0;
     int image_height = 0;
     GLuint image_texture = 0;
+    float unseen_image_height = 0.0f;
 
     std::vector<Marker> markers;
     float line_width = 256.0f;
@@ -136,7 +138,7 @@ private:
 
         // the position of the marker height is the window height minus the upper unseen portion of the image
         float scroll_ratio = ImGui::GetScrollY() / ImGui::GetScrollMaxY();
-        float unseen_image_height = scrollable_image_height * scroll_ratio;
+        unseen_image_height = scrollable_image_height * scroll_ratio;
 
         // draw the audio waveform
         ImGui::Image(

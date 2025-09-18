@@ -18,10 +18,8 @@ class AudioPlayer {
 public:
     void Update(std::string path) {
         // display the audio buttons in the same window as the waveform image
-        ImGui::Begin("Waveform");
-
-        ImVec2 window_size = ImGui::GetWindowSize();
-        ImGui::SetNextWindowSize(ImVec2(window_size.x, 50), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(256, 60), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Audio");
         ImGui::BeginChild("Audio");
 
         if (is_playing)
@@ -32,6 +30,7 @@ public:
             ImGui::EndDisabled();
 
             // only pause enabled if playing
+            ImGui::SameLine();
             if (ImGui::Button("PAUSE", ImVec2(60, 20))) {
                 Pause();
                 is_playing = false;
@@ -45,6 +44,7 @@ public:
             }
 
             // cannot pause while paused
+            ImGui::SameLine();
             ImGui::BeginDisabled();
             ImGui::Button("PAUSE", ImVec2(60, 20));
             ImGui::EndDisabled();
@@ -71,14 +71,6 @@ private:
     bool is_playing = false;
 
     void Play(std::string path) {
-        // get duration
-        //std::string waveform_duration_cmd = std::format(
-        //    "ffprobe -i {} -show_entries format=duration -v quiet -of csv=\"p=0\"",
-        //    path
-        //);
-        //int waveform_result = system(waveform_duration_cmd.c_str());
-        //std::cin >> total_duration;
-
         std::string command = std::format(
             "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {}",
             path
@@ -108,19 +100,3 @@ private:
         PlaySound(NULL, NULL, 0); 
     }
 };
-
-
-//std::string command = "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp3";
-//FILE* pipe = popen(command.c_str(), "r");
-//if (!pipe) {
-//    // Handle error
-//}
-//char buffer[128];
-//std::string result = "";
-//while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-//    result += buffer;
-//}
-//pclose(pipe);
-//
-//// Convert result (string) to double for duration
-//double duration = std::stod(result);
