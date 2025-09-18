@@ -1,5 +1,7 @@
 #pragma once
 
+
+#include <cstdio> // For popen, pclose
 #include <chrono>
 #include <string>
 #include <format>
@@ -70,12 +72,30 @@ private:
 
     void Play(std::string path) {
         // get duration
-        std::string waveform_duration_cmd = std::format(
-            "ffprobe -i {} -show_entries format=duration -v quiet -of csv=\"p=0\"",
+        //std::string waveform_duration_cmd = std::format(
+        //    "ffprobe -i {} -show_entries format=duration -v quiet -of csv=\"p=0\"",
+        //    path
+        //);
+        //int waveform_result = system(waveform_duration_cmd.c_str());
+        //std::cin >> total_duration;
+
+        std::string command = std::format(
+            "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {}",
             path
         );
-        int waveform_result = system(waveform_duration_cmd.c_str());
-        std::cin >> total_duration;
+        FILE* pipe = _popen(command.c_str(), "r");
+        if (!pipe) {
+            // Handle error
+        }
+        char buffer[128];
+        std::string result = "";
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
+        }
+        _pclose(pipe);
+
+        // Convert result (string) to double for duration
+        total_duration = std::stod(result);
         
         // Play a WAV file asynchronously (non-blocking)
         std::wstring w_path(path.begin(), path.end());
@@ -88,3 +108,19 @@ private:
         PlaySound(NULL, NULL, 0); 
     }
 };
+
+
+//std::string command = "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp3";
+//FILE* pipe = popen(command.c_str(), "r");
+//if (!pipe) {
+//    // Handle error
+//}
+//char buffer[128];
+//std::string result = "";
+//while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+//    result += buffer;
+//}
+//pclose(pipe);
+//
+//// Convert result (string) to double for duration
+//double duration = std::stod(result);
