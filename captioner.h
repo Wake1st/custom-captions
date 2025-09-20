@@ -14,7 +14,7 @@
 #include "text_time.h"
 
 
-const float zoom_update_rate = 0.1f;
+const float zoom_update_rate = 0.04f;
 
 
 class Captioner {
@@ -165,13 +165,13 @@ private:
         float relative_height = 0.0;
         if ((zoom * image_height - window_size.y) < 0) {
             relative_height = (io.MousePos.y - window_pos.y) / zoom;
-            std::string msg = std::format("relative height: {} = ({} - {}) / {}", relative_height, io.MousePos.y, window_pos.y, zoom);
-            ImGui::Text(msg.c_str());
+            //std::string msg = std::format("relative height: {} = ({} - {}) / {}", relative_height, io.MousePos.y, window_pos.y, zoom);
+            //ImGui::Text(msg.c_str());
         }
         else {
             relative_height = (io.MousePos.y - window_pos.y + ((image_height - window_size.y) * scroll_ratio)) / zoom;
-            std::string msg = std::format("relative height: {} = ({} - {} + (({} - {}) * {})) / {}", relative_height, io.MousePos.y, window_pos.y, image_height, window_size.y, scroll_ratio, zoom);
-            ImGui::Text(msg.c_str());
+            //std::string msg = std::format("relative height: {} = ({} - {} + (({} - {}) * {})) / {}", relative_height, io.MousePos.y, window_pos.y, image_height, window_size.y, scroll_ratio, zoom);
+            //ImGui::Text(msg.c_str());
         }
 
         // draw the audio waveform
@@ -196,7 +196,6 @@ private:
             // first check for removal, and exit loop since nothing is needed
             if (hovered_over_marker && ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_2)) {
                 markers.erase(markers.begin() + i);
-                break;
             }
 
             // set when selected, toggle off active when 
@@ -223,7 +222,6 @@ private:
 
                 // since we're draggin this marker, no other needs to be checked
                 is_actively_dragging = true;
-                break;
             }
         }
 

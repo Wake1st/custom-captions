@@ -40,9 +40,8 @@ This is for any devs who wish to contribute. Currently, I'm storing any used lib
 - [x] delete input box when removing marker
 - [x] play/pause button
 - [x] zoom in an out of image
-  - issue: the height slightly changes
-- [ ] hovering/scrolling in one window will cause the other to match
 - [ ] serialize data in time/text pairs (json is fine)
 - [ ] load project with project data
 - [ ] save project data
 - [ ] open project data
+- [ ] hovering/scrolling in one window will cause the other to match
