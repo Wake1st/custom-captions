@@ -14,9 +14,17 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "file_loader.h"
 #include "captioner.h"
 #include "audio_player.h"
 
+enum FileDialogState {
+	OPEN,
+	SAVE,
+	LOAD,
+};
+
+static FileDialogState dialogState;
 
 void ErrorCallback(int error, const char* description)
 {
@@ -136,6 +144,17 @@ void DrawDockableParentWindow(bool *p_open, ImGui::FileBrowser *fileDialog) {
 
 			if (ImGui::MenuItem("Open", "")) {
 				fileDialog->Open();
+				dialogState = FileDialogState::OPEN;
+			}
+
+			if (ImGui::MenuItem("Save", "")) {
+				fileDialog->Open();
+				dialogState = FileDialogState::SAVE;
+			}
+
+			if (ImGui::MenuItem("Load", "")) {
+				fileDialog->Open();
+				dialogState = FileDialogState::LOAD;
 			}
 
             ImGui::EndMenu();
@@ -189,13 +208,14 @@ int main() {
 	AudioPlayer audio_player = AudioPlayer();
 
 	// create a file browser instance
-	ImGui::FileBrowser fileDialog;
+	ImGui::FileBrowser fileDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_EnterNewFilename);
 
 	// (optional) set browser properties
 	fileDialog.SetTitle("File Browser");
-	fileDialog.SetTypeFilters({ ".wav", ".mp3", ".ogg" });
+	fileDialog.SetTypeFilters({ ".wav", ".mp3", ".ogg", ".json" });
+	
 
-	std::string audio_file = "EMPTY";
+	std::string file_name = "EMPTY";
 	std::string image_filename = "EMPTY";
 
 	while (!glfwWindowShouldClose(window))
@@ -216,8 +236,9 @@ int main() {
 		DrawDockableParentWindow((bool*)true, &fileDialog);
 
 		// audio functions
-		if (audio_file != "EMPTY")
-			audio_player.Update(audio_file);
+		if (file_name != "EMPTY") {
+			audio_player.Update(file_name);
+		}
 
 		// tool
 		captioner.Update();
@@ -234,12 +255,45 @@ int main() {
 		if (fileDialog.HasSelected())
 		{
 			// get path and clear dialog
-			audio_file = fileDialog.GetSelected().string();
+			file_name = fileDialog.GetSelected().string();
 			fileDialog.ClearSelected();
 
-			// use ffmpeg to create waveform of file
-			image_filename = CreateWaveform(audio_file);
-			captioner.Load(image_filename);
+			switch (dialogState) {
+				case FileDialogState::OPEN: 
+				{
+					// use ffmpeg to create waveform of file
+					image_filename = CreateWaveform(file_name);
+					captioner.Load(image_filename);
+
+					// set duration
+					audio_player.SetDuration(file_name);
+					captioner.SetDuration(audio_player.GetDuration());
+
+					break;
+				}
+				case FileDialogState::SAVE: 
+				{
+					// get points
+					std::vector<TimeText> points = {};
+					captioner.GetDataPoints((float)audio_player.GetDuration(), points);
+
+					// build file data
+					FileLoader::Save(file_name.c_str(), points);
+
+					break;
+				}
+				case FileDialogState::LOAD: 
+				{
+					// pull data
+					std::vector<TimeText> points = {};
+					FileLoader::Load(file_name.c_str(), points);
+
+					// set markers
+					captioner.SetDataPoints(points);
+
+					break;
+				}
+			}
 		}
 
 		// render imgui

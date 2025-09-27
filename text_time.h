@@ -1,6 +1,8 @@
 #pragma once
 
+#include <string>
+
 struct TimeText {
 	float time;
-	const char* text;
+	std::string text;
 };

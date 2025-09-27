@@ -8,10 +8,12 @@ const int hover_thickness = 20;
 class Marker {
 public:
 	char buffer[64] = "";
+	float time = 0;
 
-	Marker(float *_width, float _height) {
+	Marker(float *_width, float _height, float _time) {
 		width = _width;
 		height = _height;
+		time = _time;
 	}
 
 	bool IsHoveredOver(ImVec2 relative_position, ImVec2 mouse_pos, float zoom) {
@@ -52,6 +54,10 @@ public:
 		);
 	}
 
+	float GetHeight() {
+		return height;
+	}
+
 	void SetHeight(float relative_height) {
 		height = relative_height;
 	}
@@ -86,6 +92,10 @@ public:
 	/// <param name="upper_bound"></param>
 	void SetHeightFromUpperBound(float upper_bound) {
 		height = upper_bound - hover_thickness / 2.0f;
+	}
+
+	void SetTime(float _t) {
+		time = _t;
 	}
 
 private:

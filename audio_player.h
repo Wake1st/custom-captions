@@ -64,13 +64,7 @@ public:
             return current_duration.count() / total_duration;
     }
 
-private:
-    double total_duration = 0.0;
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::time_point();
-
-    bool is_playing = false;
-
-    void Play(std::string path) {
+    void SetDuration(std::string path) {
         std::string command = std::format(
             "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {}",
             path
@@ -88,7 +82,19 @@ private:
 
         // Convert result (string) to double for duration
         total_duration = std::stod(result);
-        
+    }
+
+    double GetDuration() {
+        return total_duration;
+    }
+
+private:
+    double total_duration = 0.0;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::time_point();
+
+    bool is_playing = false;
+
+    void Play(std::string path) {
         // Play a WAV file asynchronously (non-blocking)
         std::wstring w_path(path.begin(), path.end());
         PlaySound(w_path.c_str(), NULL, SND_ASYNC);

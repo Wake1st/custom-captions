@@ -42,8 +42,8 @@ public:
         if (io.KeyCtrl)
             zoom += zoom_update_rate * io.MouseWheel;
 
-        bool marker_added = MarkerWindow(io);
-        InputWindow(marker_added);
+        MarkerWindow(io);
+        InputWindow();
     }
 
     void DrawPlayback(double ratio) {
@@ -68,6 +68,45 @@ public:
         ImGui::End();
     }
 
+    void GetDataPoints(float duration, std::vector<TimeText> &points) {
+        points.clear();
+
+        for (int i = 0; i < markers.size(); i++) {
+            TimeText point = { 0 };
+            point.time = markers[i].time;
+            point.text = markers[i].buffer;
+            points.push_back(point);
+        }
+    }
+
+    void SetDataPoints(std::vector<TimeText>& points) {
+        // get imgui variables
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::Begin("Waveform");
+        ImGui::BeginChild("Image");
+
+        ImVec2 window_pos = ImGui::GetWindowPos();
+        ImVec2 window_size = ImGui::GetWindowSize();
+
+        float scroll_ratio = ImGui::GetScrollY() / ImGui::GetScrollMaxY();
+        float relative_height = 0.0;
+        if ((zoom * image_height - window_size.y) < 0) {
+            relative_height = (io.MousePos.y - window_pos.y) / zoom;
+        }
+        else {
+            relative_height = (io.MousePos.y - window_pos.y + ((image_height - window_size.y) * scroll_ratio)) / zoom;
+        }
+        float time = relative_height / image_height * total_duration;
+
+        for (int i = 0; i < points.size(); i++) {
+            markers.push_back(Marker(&line_width, relative_height, time));
+        }
+    }
+
+    void SetDuration(float duration) {
+        total_duration = duration;
+    }
+
 private:
 	const char* audioPath = "";
     std::vector<TimeText> timeTexts;
@@ -82,6 +121,8 @@ private:
     float line_width = 256.0f;
     float line_thickness = 1.0f;
     float playback_thickness = 4.0f;
+
+    float total_duration = 0.0f;
 
     // Simple helper function to load an image into a OpenGL texture with common settings
     bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_texture, int* out_width, int* out_height)
@@ -133,7 +174,7 @@ private:
         return ret;
     }
 
-    bool MarkerWindow(ImGuiIO& io) {
+    void MarkerWindow(ImGuiIO& io) {
         // create a window of a specific size
         ImGui::SetNextWindowSize(ImVec2(line_width, 600), ImGuiCond_FirstUseEver);
         ImGui::Begin("Waveform");
@@ -218,6 +259,8 @@ private:
                 }
                 else {
                     markers[i].SetHeight(relative_height);
+                    float time = relative_height / image_height * total_duration;
+                    markers[i].SetTime(time);
                 }
 
                 // since we're draggin this marker, no other needs to be checked
@@ -226,7 +269,6 @@ private:
         }
 
         // add a new marker
-        bool added_new_marker = false;
         if (window_is_hovered && !is_actively_dragging) {
             // draw a horizontal line at the cursor, relative to current window
             ImGui::GetWindowDrawList()->AddLine(
@@ -239,10 +281,11 @@ private:
             // attempt to insert on left mouse click
             if (ImGui::IsMouseClicked(GLFW_MOUSE_BUTTON_1)) {
                 // create a new marker where the mouse is
-                Marker new_marker = Marker(&line_width, relative_height);
+                float time = relative_height / image_height * total_duration;                
+                Marker new_marker = Marker(&line_width, relative_height, time);
 
                 // if no insert, show user feedback
-                added_new_marker = CanInsertMarker(&new_marker);
+                bool added_new_marker = CanInsertMarker(&new_marker);
                 if (!added_new_marker) {
                     new_marker.ShowError(ImVec2(window_pos.x, relative_height), io.MousePos, zoom);
                 }
@@ -251,8 +294,6 @@ private:
 
         ImGui::EndChild();
         ImGui::End();
-
-        return added_new_marker;
     }
 
     bool CanInsertMarker(Marker *marker) {
@@ -289,13 +330,13 @@ private:
         return false;
     }
 
-    void InputWindow(bool create_input) {
+    void InputWindow() {
         ImGui::SetNextWindowSize(ImVec2(512, 600), ImGuiCond_FirstUseEver);
         ImGui::Begin("Text");
 
         // display all existing inputs
         for (int i = 0; i < markers.size(); i++) {
-            std::string label = std::format("Input-{}", i + 1);
+            std::string label = std::format("{}", markers[i].time);
             ImGui::InputText(label.c_str(), markers[i].buffer, 64);
         }
 
